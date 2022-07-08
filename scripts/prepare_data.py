@@ -11,15 +11,15 @@ print('Importing raw data')
 main_df = pd.read_parquet(datapath)
 
 print('Loading auxiliaries')
-with open('re_pattern.txt', 'r', encoding='utf8') as f:
+with open('../data/re_pattern2.txt', 'r', encoding='utf8') as f:
     pattern = re.compile(f.read())
 
-with open('re_exceptions.txt', 'r', encoding='utf8') as f:
+with open('../data/re_exceptions.txt', 'r', encoding='utf8') as f:
     exceptions = []
     for line in f.readlines():
         exceptions.append(line.strip('\n'))
 
-with open('placename_replacement_dict.json', 'r', encoding='utf8') as f:
+with open('../data/placename_replacement_dict.json', 'r', encoding='utf8') as f:
     placename_replacement_dict = json.load(f)
 
 
@@ -175,7 +175,7 @@ df['delta'] = (df['doc_date'] - df['origin_date']).dt.days
 df = df.loc[(df.delta > 0) & (df.delta < 350)] 
 
 print('Saving the dataframe')
-df.to_csv('processed_data.tsv', sep='\t', encoding='utf8', index=False)
+df.to_csv('../data/processed_data_sample.tsv', sep='\t', encoding='utf8', index=False)
 
 print('Finished')
 
