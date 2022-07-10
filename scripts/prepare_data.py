@@ -27,9 +27,11 @@ with open('../data/placename_replacement_dict.json', 'r', encoding='utf8') as f:
 def extract_data_from_match(match):
     m = match.groupdict()
     if m['DATE2'] is None:
-        return [m['placename'], m['date'], m['date_par'], m['month'], m['month2'], match.span()[0], match.span()[1]]
+        return [m['placename'], m['date'], m['date_par'], m['month'], m['month2'], m['year'],
+                match.span()[0], match.span()[1]]
     elif m['DATE'] is None:
-        return [m['placename'], m['date2'], m['date2_par'], m['month2'], m['month2_par'], match.span()[0], match.span()[1]]
+        return [m['placename'], m['date2'], m['date2_par'], m['month2'], m['month2_par'], m['year'],
+                match.span()[0], match.span()[1]]
 
         
 def scan_placenames_dates(main_df, exceptions):
@@ -41,11 +43,24 @@ def scan_placenames_dates(main_df, exceptions):
         for m in matches:
             results.append([ix, row.date] + extract_data_from_match(m))
         
-    result_df = pd.DataFrame(columns=['doc_id', 'doc_date', 'placename', 'day', 'day2', 'month', 'month2', 'start', 'end'],
+    result_df = pd.DataFrame(columns=['doc_id',
+                                      'doc_date',
+                                      'placename',
+                                      'day',
+                                      'day2',
+                                      'month',
+                                      'month2',
+                                      'origin_year',
+                                      'start',
+                                      'end'],
                              data=results).fillna(pd.NA)
     
     result_df['doc_date'] = pd.to_datetime(result_df['doc_date'], format='%Y-%m-%d')
-    result_df['year'] = result_df['doc_date'].dt.year
+    #result_df['year'] = result_df['doc_date'].dt.year
+
+    result_df['origin_year'].fillna(0, inplace=True)
+    result_df['origin_year'] = result_df['origin_year'].astype(int)
+    result_df['origin_year'].replace(0, pd.NA, inplace=True)
     
     for col in ['day', 'day2']:
         
@@ -74,9 +89,10 @@ def cleanup_dates(df):
     for col in ['month', 'month2']:
     
         df[col] = df[col].str.capitalize()
-        df[col].replace({'Dez': 'Dec', 'Mar': 'Mär', 'Oct': 'Okt', '0ct': 'Okt', '0kt': 'Okt', 'Ocl': 'Oct',
-                          'Jnl': 'Jul', 'Jnn': 'Jun', 'Juu': 'Jun', 'May': 'Mai', 'Spt': 'Sept'}, inplace=True)
-        
+        df[col] = df[col].str.capitalize()
+        df[col].replace({'Dez': 'Dec', 'Mar': 'Mär', 'Oct': 'Okt', '0ct': 'Okt', '0kt': 'Okt', 'Ocl': 'Okt',
+                         'Spt': 'Sept', 'Jnl': 'Jul', 'Jnn': 'Jun', 'Juu': 'Jun', 'Jnu': 'Jun', 'May': 'Mai'}, inplace=True)
+
         df[col].replace(month_dict, inplace=True)
         df.loc[df[col].isin(['C', 'C.', 'D. m', 'D. m.']), col] = df.loc[df[col].isin(['C', 'C.', 'D. m', 'D. m.']), 'doc_date'].dt.month
         df.loc[df[col].isin(['V. m', 'V. m.']), 'month'] = (df.loc[df[col].isin(['v. M', 'V. m.']), 'doc_date'] - pd.DateOffset(months=1)).dt.month - 1
@@ -95,9 +111,9 @@ def verify_dates(ix, df):
     
     #print(df.loc[ix,['day', 'day2', 'month', 'doc_date']].values)
     
-    day, day2, month, month2, doc_date = [value if type(value) != pd._libs.missing.NAType else None
-                                          for value in df.loc[ix,['day', 'day2', 'month', 'month2', 'doc_date']].values]
-    
+    day, day2, month, month2, origin_year, doc_date = [value if type(value) != pd._libs.missing.NAType else None
+                                          for value in df.loc[ix,['day', 'day2', 'month', 'month2', 'origin_year', 'doc_date']].values]
+        
     # if 
     if day is None or month is None:
         return pd.NA
@@ -105,8 +121,14 @@ def verify_dates(ix, df):
     # two dates, two months
     if None not in [day, day2, month, month2]:
         
+        if origin_year:
+            origin_date = min(
+                pd.to_datetime(f'{str(origin_year)}-{month}-{day}', format='%Y-%m-%d', errors='coerce'),
+                pd.to_datetime(f'{str(origin_year)}-{month2}-{day2}', format='%Y-%m-%d', errors='coerce')
+            )
+            
         # exception for december
-        if (month == 12 or month2 == 12) and doc_date.month == 1:
+        elif (month in (11, 12) or month2 in (11, 12)) and doc_date.month in (1, 2):
             possible_origin_dates = []
             for m in [month, month2]:
                 origin_year = doc_date.year-1 if m == 12 else doc_date.year
@@ -127,6 +149,12 @@ def verify_dates(ix, df):
     # two dates, one month
     elif day and day2 and month:
         
+        if origin_year:
+            origin_date = min(
+                pd.to_datetime(f'{str(origin_year)}-{month}-{day2}', format='%Y-%m-%d', errors='coerce'),
+                pd.to_datetime(f'{str(origin_year)}-{month}-{day}', format='%Y-%m-%d', errors='coerce')
+            )
+        
         # if month is the same or precedes the publication month
         if month == doc_date.month or month < doc_date.month:
             
@@ -135,7 +163,7 @@ def verify_dates(ix, df):
                 pd.to_datetime(f'{str(doc_date.year)}-{month}-{day2}', format='%Y-%m-%d', errors='coerce'),
                 pd.to_datetime(f'{str(doc_date.year)}-{month}-{day}', format='%Y-%m-%d', errors='coerce')
             )
-
+       
         # if month follows publication month
         elif month > doc_date.month:
             
@@ -146,7 +174,7 @@ def verify_dates(ix, df):
                     pd.to_datetime(f'{str(doc_date.year-1)}-{month}-{day}', format='%Y-%m-%d', errors='coerce'))                 
             else:
                 return pd.NA
-        
+            
             
     # one day, one month
     elif day and month:
@@ -154,7 +182,7 @@ def verify_dates(ix, df):
         # if month precedes publication month
         if month < doc_date.month:
             # (probably) julian
-            origin_date = pd.to_datetime(f'{str(doc_date.year)}-{month}-{day}',
+            origin_date = pd.to_datetime(f'{origin_year if origin_year else str(doc_date.year)}-{month}-{day}',
                                          format='%Y-%m-%d', errors='coerce')
         
         # if month is the same as publication month
@@ -165,7 +193,8 @@ def verify_dates(ix, df):
                 
                 # origin is gregorian, convert to julian first, then apply
                 try:
-                    day_jul = convertdate.julian.from_gregorian(year=doc_date.year, month=month, day=day)
+                    day_jul = convertdate.julian.from_gregorian(year=origin_year if origin_year else doc_date.year,
+                                                                month=month, day=day)
                 except ValueError:
                     return pd.NA
                 origin_date = pd.to_datetime(f'{str(day_jul[0])}-{str(day_jul[1])}-{str(day_jul[2])}',
@@ -174,15 +203,18 @@ def verify_dates(ix, df):
             # if the day precedes the publication day, within the same month
             else:
                 # origin is julian, apply directly to datetime
-                origin_date = pd.to_datetime(f'{str(doc_date.year)}-{month}-{day}',
+                origin_date = pd.to_datetime(f'{origin_year if origin_year else str(doc_date.year)}-{month}-{day}',
                                              format='%Y-%m-%d', errors='coerce')
         
         
         # if month is greater than publication month
         elif month > doc_date.month:
             
+            if origin_year:
+                origin_date = pd.to_datetime(f'{origin_year}-{month}-{day}', format='%Y-%m-%d', errors='coerce')
+                
             # exception for december
-            if month == 12 and doc_date.month == 1:
+            elif month in (11, 12) and doc_date.month in (1, 2):
                 # origin is from last year - probably in julian b/c is smaller that doc_date and there is no day2
                 origin_date = pd.to_datetime(f'{str(doc_date.year-1)}-{month}-{day}',
                                              format='%Y-%m-%d', errors='coerce')
@@ -225,7 +257,7 @@ print(f'Dropping {len(df) - len(df.loc[(df.delta > 0) & (df.delta < 350)])} entr
 #df = df.loc[(df.delta > 0) & (df.delta < 350)] 
 
 print('Saving the dataframe')
-df.to_csv('../data/processed_data_2.tsv', sep='\t', encoding='utf8', index=False)
+df.to_csv('../data/processed_data.tsv', sep='\t', encoding='utf8', index=False)
 
 print('Finished')
 
