@@ -6,25 +6,32 @@ import convertdate
 import json
 from tqdm import tqdm
 
-datapath = sys.argv[1]
+datapath = sys.argv[1] # ../data/RZ_processed.parquet
 
 print('Importing raw data')
 main_df = pd.read_parquet(datapath)
 
 print('Loading auxiliaries')
+# this is the regex pattern
 with open('../data/re_pattern2.txt', 'r', encoding='utf8') as f:
     pattern = re.compile(f.read(), flags=re.MULTILINE)
 
+# custom list of false positive words to be excluded from the placenames the regex matches
 with open('../data/re_exceptions.txt', 'r', encoding='utf8') as f:
     exceptions = []
     for line in f.readlines():
         exceptions.append(line.strip('\n'))
 
+# dictionary to converge various placename wordforms into standardized forms (e.g. PariS -> Paris)
 with open('../data/placename_replacement_dict.json', 'r', encoding='utf8') as f:
     placename_replacement_dict = json.load(f)
 
 
 def extract_data_from_match(match):
+
+    """Input: regex match object
+       Output: returns the match properties in an ordered list form"""
+
     m = match.groupdict()
     if m['DATE2'] is None:
         return [m['placename'], m['date'], m['date_par'], m['month'], m['month2'], m['year'],
@@ -35,6 +42,9 @@ def extract_data_from_match(match):
 
         
 def scan_placenames_dates(main_df, exceptions):
+
+    """Input: Rigasche Zeitung dataframe, list of exceptions
+       Output: dataframe that contains date, placename and span info from the regex match"""
     
     results = []
     
@@ -55,9 +65,8 @@ def scan_placenames_dates(main_df, exceptions):
                                       'end'],
                              data=results).fillna(pd.NA)
     
+    # some basic cleanup
     result_df['doc_date'] = pd.to_datetime(result_df['doc_date'], format='%Y-%m-%d')
-    #result_df['year'] = result_df['doc_date'].dt.year
-
     result_df['origin_year'].fillna(0, inplace=True)
     result_df['origin_year'] = result_df['origin_year'].astype(int)
     result_df['origin_year'].replace(0, pd.NA, inplace=True)
@@ -113,10 +122,11 @@ def verify_dates(ix, df):
     
     day, day2, month, month2, origin_year, doc_date = [value if type(value) != pd._libs.missing.NAType else None
                                           for value in df.loc[ix,['day', 'day2', 'month', 'month2', 'origin_year', 'doc_date']].values]
-    
+
+    # optional, for debugging    
     path = []
     
-    # if 
+    # if day or month is missing
     if day is None or month is None:
         path.append(0)
         return pd.NA
