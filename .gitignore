@@ -3,3 +3,4 @@ regex_tests.txt
 data/RZ_sample.parquet
 data/RZ_processed.parquet
 data/processed_data_2.tsv
+streamlit/
