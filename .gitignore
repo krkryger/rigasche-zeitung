@@ -5,3 +5,4 @@ data/RZ_processed.parquet
 data/processed_data_2.tsv
 streamlit/
 references/
+temp/
