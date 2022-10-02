@@ -1,8 +1,10 @@
 notebooks/.ipynb_checkpoints
+notebooks/Untitled.ipynb
 regex_tests.txt
+data/geo
 data/RZ_sample.parquet
 data/RZ_processed.parquet
-data/processed_data_2.tsv
+data/processed_data_old.tsv
 streamlit/
 references/
 temp/
