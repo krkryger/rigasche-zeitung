@@ -50,7 +50,7 @@ Darmstadt	49.87167	8.65027	g
 Mailand	45.46427	9.18951	g
 Italien	42.83333	12.83333	g
 Breslau	51.1	17.03333	g
-Türkische Grenze	0.0	0.0	j
+Türkische Grenze    41.15   43.2167 j
 Antwerpen	51.22047	4.40026	g
 Alexandrien	31.20176	29.91582	g
 Marseille	43.29695	5.38107	g
@@ -89,7 +89,7 @@ Christiania	59.91273	10.74609	g
 Koblenz	50.35357	7.57883	g
 Braunschweig	52.26594	10.52673	g
 Semlin	44.8458	20.40116	g
-Italienische Grenze	0.0	0.0	g
+Italienische Grenze 46.5369 12.1390 g
 Kiew	50.45466	30.5238	j
 Potsdam	52.39886	13.06566	g
 Dublin	53.33306	-6.24889	g
@@ -143,7 +143,7 @@ Eisenach	50.9807	10.31522	g
 Wenden	50.96667	7.86667	j
 Helsingör	56.03606	12.6136	g
 Perpignan	42.69764	2.89541	g
-Serbische Grenze	0.0	0.0	j
+Serbische Grenze    44.66436    20.92763    j
 Hartlepool	54.68554	-1.21028	g
 Malta	35.91667	14.43333	g
 Narwa	59.37722	28.19028	j
@@ -151,7 +151,7 @@ Dünkirchen	51.0344	2.37681	g
 Wolmar	57.54108	25.42751	j
 Gravesend	40.5976	-73.96514	g
 Erfurt	50.9787	11.03283	g
-Spanische Grenze	0.0	0.0	g
+Spanische Grenze    42.68052    -0.10713    g
 Lyon	45.74846	4.84671	g
 Lüttich	50.63373	5.56749	g
 Hanau	50.13423	8.91418	g
@@ -253,7 +253,7 @@ Tirnowo	43.08124	25.62904	j
 Porto	41.14961	-8.61099	g
 Ssaratow	51.54056	46.00861	j
 Graz	47.06667	15.45	g
-Polnische Grenze	0.0	0.0	g
+Polnische Grenze    52.87908    18.79505    g
 Rotterdam	51.9225	4.47917	g
 Aberdeen	57.14369	-2.09814	g
 Hermannstadt	45.8	24.15	g
