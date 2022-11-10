@@ -9,5 +9,5 @@ streamlit/
 references/
 temp/
 data/models
-data/spans_tokenized.jsonl
+data/spans_tokenized.json
 data/urban_population
