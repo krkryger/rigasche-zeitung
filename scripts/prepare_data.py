@@ -5,27 +5,27 @@ import convertdate
 import json
 from tqdm import tqdm
 
-datapath = sys.argv[1] # ../data/RZ_processed.parquet
+datapath = sys.argv[1] # ../data/raw/RZ_processed.parquet
 
 print('Importing raw data')
 main_df = pd.read_parquet(datapath)
 
 print('Loading auxiliaries')
 # this is the regex pattern
-with open('../data/re_pattern2.txt', 'r', encoding='utf8') as f:
+with open('../data/regex/re_pattern.txt', 'r', encoding='utf8') as f:
     pattern = re.compile(f.read(), flags=re.MULTILINE)
 
 # custom list of false positive words to be excluded from the placenames the regex matches
-with open('../data/re_exceptions.txt', 'r', encoding='utf8') as f:
+with open('../data/regex/re_exceptions.txt', 'r', encoding='utf8') as f:
     exceptions = []
     for line in f.readlines():
         exceptions.append(line.strip('\n'))
 
 # dictionary to converge various placename wordforms into standardized forms (e.g. PariS -> Paris)
-with open('../data/placename_replacement_dict.json', 'r', encoding='utf8') as f:
+with open('../data/regex/placename_replacement_dict.json', 'r', encoding='utf8') as f:
     placename_replacement_dict = json.load(f)
 
-places = pd.read_csv('../data/places.tsv', sep='\t', encoding='utf8')
+places = pd.read_csv('../data/places/places.tsv', sep='\t', encoding='utf8')
 
 
 def extract_data_from_match(match):
@@ -257,10 +257,11 @@ def verify_dates(ix, df, places, max_delay=120):
 
 
 
-
 print('Scanning raw data for placenames and dates')
 df = scan_placenames_dates(main_df, exceptions)
+print(f'Found {len(df)} initial matches after removing exceptions')
 
+print('Replacing placenames')
 df.placename.replace(placename_replacement_dict, inplace=True)
 
 print('Formatting date info')
@@ -288,11 +289,11 @@ df['origin_date'] = pd.to_datetime(df.origin_date)
 df['delta'] = (df['doc_date'] - df['origin_date']).dt.days
 
 # drop entries with origin date that is negative or more than 1 year
-#print(f'Dropping {len(df) - len(df.loc[(df.delta > 0) & (df.delta < 350)])} entries with invalid (x < 0 | x > 350) time differences')
-#df = df.loc[(df.delta > 0) & (df.delta < 350)] 
+print(f'Dropping {len(df) - len(df.loc[(df.delta > 0) & (df.delta < 350)])} entries with invalid (x < 0 | x > 350) time differences')
+df = df.loc[(df.delta > 0) & (df.delta < 350)] 
+print(f'Final dataframe: {len(df)} entries')
 
 print('Saving the dataframe')
 df.to_csv('../data/processed_data.tsv', sep='\t', encoding='utf8', index=False)
 
 print('Finished')
-
