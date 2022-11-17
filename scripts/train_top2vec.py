@@ -91,8 +91,10 @@ def build_top2vec_corpus(spans):
 if __name__ == '__main__':
 
     min_count = int(sys.argv[1])
-    model_name = str(sys.argv[2]) # file name only, no extension or directory (path included in function)
+    speed = str(sys.argv[2]) # fast-learn, learn or deep-learn
+    model_name = str(sys.argv[3]) # file name only, no extension or directory (path included in function)
 
+    print('Loading data')
     df = pd.read_csv('../data/processed_data.tsv', sep='\t', encoding='utf8')
     df.doc_date = pd.to_datetime(df.doc_date)
     df.origin_date = pd.to_datetime(df.origin_date)
@@ -100,21 +102,31 @@ if __name__ == '__main__':
 
     rz = pd.read_parquet('../data/raw/RZ_processed.parquet')
 
+    print('Segmenting')
     spans = list(simple_segmentation(df, rz))
 
     with open('../temp/stopwords.json', 'r', encoding='utf8') as f:
         stopwords = json.load(f)
 
+    print('Tokenizing')
     spans_tokenized = tokenize_spans(spans)
 
+    print('Building corpus')
     corpus = build_top2vec_corpus(spans_tokenized)
+
+    # free up some memory
+    del spans
+    del spans_tokenized
+    del df
+    del rz
 
     t2v = Top2Vec(documents=list(corpus.values()),
               document_ids=list(corpus.keys()),
               min_count=min_count,
-              speed='deep-learn',
+              speed=speed,
               workers=multiprocessing.cpu_count())
 
+    print('Saving')
     if os.path.exists('..\\data\\models'):
         t2v.save(f'..\\data\\models\\{model_name}.pkl')
     else:
