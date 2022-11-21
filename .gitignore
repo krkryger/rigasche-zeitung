@@ -1,5 +1,10 @@
+data/raw
+data/models
+data/spans_tokenized.json
+
 notebooks/.ipynb_checkpoints
-regex_tests.txt
-data/RZ_sample.parquet
-data/RZ_processed.parquet
-data/processed_data_2.tsv
+notebooks/scrap.ipynb
+
+streamlit/
+references/
+temp/
