@@ -11,8 +11,12 @@ print('Importing raw data')
 main_df = pd.read_parquet(datapath)
 
 print('Loading auxiliaries')
+<<<<<<< HEAD
 # this is the regex pattern
 with open('../data/regex/re_pattern.txt', 'r', encoding='utf8') as f:
+=======
+with open('../data/re_pattern2.txt', 'r', encoding='utf8') as f:
+>>>>>>> 0f8bedd0892856a134cc30e14fec03048b759efa
     pattern = re.compile(f.read(), flags=re.MULTILINE)
 
 # custom list of false positive words to be excluded from the placenames the regex matches
@@ -138,12 +142,23 @@ def verify_dates(ix, df, places, max_delay=120):
         print('calendar problem')
         return None
     
+<<<<<<< HEAD
     # if day or month is missing
+=======
+    day, day2, month, month2, origin_year, doc_date = [value if type(value) != pd._libs.missing.NAType else None
+                                          for value in df.loc[ix,['day', 'day2', 'month', 'month2', 'origin_year', 'doc_date']].values]
+    
+    path = []
+    
+    # if 
+>>>>>>> 0f8bedd0892856a134cc30e14fec03048b759efa
     if day is None or month is None:
+        path.append(0)
         return pd.NA
     
     ### two dates, two months
     if None not in [day, day2, month, month2]:
+        path.append(1)
         
         if origin_year:
             return min(
@@ -161,15 +176,27 @@ def verify_dates(ix, df, places, max_delay=120):
         # if both months come after publication month, news is probably from last year
         elif month > doc_date.month and month2 > doc_date.month:
             
+<<<<<<< HEAD
             possible_origin_dates = []
             for d, m in zip([day, day2], [month, month2]):
                 origin_year = doc_date.year - 1
                 possible_origin_dates.append(
                         pd.to_datetime(f'{str(origin_year)}-{m}-{d}', format='%Y-%m-%d', errors='coerce'))
             return min(possible_origin_dates)
+=======
+                path.append(1.1)
+                possible_origin_dates = []
+                for d, m in zip([day, day2], [month, month2]):
+                    origin_year = doc_date.year - 1
+                    possible_origin_dates.append(
+                            pd.to_datetime(f'{str(origin_year)}-{m}-{d}', format='%Y-%m-%d', errors='coerce'))
+                        
+                return min(possible_origin_dates)
+>>>>>>> 0f8bedd0892856a134cc30e14fec03048b759efa
         
         # normal proceeding
         else:
+            path.append(1.2)
             # julian is the smaller one
             return min(
                 pd.to_datetime(f'{str(doc_date.year)}-{month}-{day}', format='%Y-%m-%d', errors='coerce'),
@@ -179,6 +206,7 @@ def verify_dates(ix, df, places, max_delay=120):
     
     ### two dates, one month
     elif day and day2 and month:
+        path.append(2)
         
         if origin_year:
             return min(
@@ -188,6 +216,10 @@ def verify_dates(ix, df, places, max_delay=120):
         
         # if month is the same or precedes the publication month
         elif month == doc_date.month or month < doc_date.month:
+<<<<<<< HEAD
+=======
+            path.append(2.1)
+>>>>>>> 0f8bedd0892856a134cc30e14fec03048b759efa
             
             # julian is the smaller one
             return min(
@@ -197,6 +229,7 @@ def verify_dates(ix, df, places, max_delay=120):
        
         # if month follows publication month
         elif month > doc_date.month:
+            path.append(2.2)
             
             # formulate dates for both possibilities
             origin_date = min(
@@ -209,15 +242,28 @@ def verify_dates(ix, df, places, max_delay=120):
                 return origin_date - pd.DateOffset(years=1)
             else:
                 # if not, it is probably a georgian date a few days ahead of the julian publication date
+<<<<<<< HEAD
                 return convert_to_julian(origin_date.year, origin_date.month, origin_date.day)
 
         else:
             pass # add something here?
+=======
+                try:
+                    day_jul = convertdate.julian.from_gregorian(year=origin_date.year,
+                                                                    month=origin_date.month, day=origin_date.day)
+                except ValueError:
+                    return pd.NA
+                
+                return pd.to_datetime(f'{str(day_jul[0])}-{str(day_jul[1])}-{str(day_jul[2])}',
+                                             format='%Y-%m-%d', errors='coerce')
+>>>>>>> 0f8bedd0892856a134cc30e14fec03048b759efa
 
             
     # one day, one month
     elif day and month:
+        path.append(3)            
         
+<<<<<<< HEAD
         if origin_year:
             if calendar == 'j':
                 return pd.to_datetime(f'{origin_year}-{month}-{day}',
@@ -255,6 +301,65 @@ def verify_dates(ix, df, places, max_delay=120):
                 else:
                     return origin_date
 
+=======
+        # if month precedes publication month
+        if month < doc_date.month:
+            path.append(3.1)
+            # (probably) julian
+            return pd.to_datetime(f'{origin_year if origin_year else str(doc_date.year)}-{month}-{day}',
+                                         format='%Y-%m-%d', errors='coerce')
+        
+        # if month is the same as publication month
+        elif month == doc_date.month:
+            path.append(3.2)
+            
+            # if the day is later than the publication day, within the same month
+            if day > doc_date.day:
+                path.append(3.21)
+                
+                # origin is gregorian, convert to julian first, then apply
+                try:
+                    day_jul = convertdate.julian.from_gregorian(year=origin_year if origin_year else doc_date.year,
+                                                                    month=month, day=day)
+                except ValueError:
+                    return pd.NA
+                
+                return pd.to_datetime(f'{str(day_jul[0])}-{str(day_jul[1])}-{str(day_jul[2])}',
+                                             format='%Y-%m-%d', errors='coerce')
+            
+            # if the day precedes the publication day, within the same month
+            else:
+                path.append(3.22)
+                # origin is (probably) julian
+                return pd.to_datetime(f'{origin_year if origin_year else str(doc_date.year)}-{month}-{day}',
+                                             format='%Y-%m-%d', errors='coerce')
+        
+        
+        # if month is greater than publication month
+        elif month > doc_date.month:
+            path.append(3.3)
+            
+            if origin_year:
+                return pd.to_datetime(f'{origin_year}-{month}-{day}', format='%Y-%m-%d', errors='coerce')
+                
+            else:
+                origin_date = pd.to_datetime(f'{str(doc_date.year)}-{month}-{day}', format='%Y-%m-%d', errors='coerce')
+             
+                # is the difference more than 12 days compared to the publication date?
+                if origin_date - doc_date > pd.Timedelta(days=12):
+                    # so the news is from last year
+                    return origin_date - pd.DateOffset(years=1)
+                else:
+                    # if not, it is probably a georgian date a few days ahead of the julian publication date
+                    try:
+                        day_jul = convertdate.julian.from_gregorian(year=origin_date.year,
+                                                                        month=origin_date.month, day=origin_date.day)
+                    except ValueError:
+                        return pd.NA
+                
+                    return pd.to_datetime(f'{str(day_jul[0])}-{str(day_jul[1])}-{str(day_jul[2])}',
+                                                 format='%Y-%m-%d', errors='coerce')
+>>>>>>> 0f8bedd0892856a134cc30e14fec03048b759efa
 
 
 print('Scanning raw data for placenames and dates')
