@@ -101,7 +101,7 @@ def cleanup_dates(df):
     
         df[col] = df[col].str.capitalize()
         df[col] = df[col].str.capitalize()
-        df[col].replace({'Dez': 'Dec', 'Mar': 'Mär', 'Oct': 'Okt', '0ct': 'Okt', '0kt': 'Okt', 'Ocl': 'Okt',
+        df[col].replace({'Dez': 'Dec', 'Mar': 'Mär', 'Oct': 'Okt', '0ct': 'Okt', '0kt': 'Okt', 'Ocl': 'Okt', 'Okl': 'Okt',
                          'Spt': 'Sept', 'Jnl': 'Jul', 'Jnn': 'Jun', 'Juu': 'Jun', 'Jnu': 'Jun', 'May': 'Mai'}, inplace=True)
 
         df[col].replace(month_dict, inplace=True)
@@ -290,7 +290,10 @@ df['delta'] = (df['doc_date'] - df['origin_date']).dt.days
 
 # drop entries with origin date that is negative or more than 1 year
 print(f'Dropping {len(df) - len(df.loc[(df.delta > 0) & (df.delta < 350)])} entries with invalid (x < 0 | x > 350) time differences')
-df = df.loc[(df.delta > 0) & (df.delta < 350)] 
+df = df.loc[(df.delta > 0) & (df.delta < 350)]
+print('Reindexing')
+df['new_index'] = range(len(df))
+df.set_index('new_index', drop=True, inplace=True)
 print(f'Final dataframe: {len(df)} entries')
 
 print('Saving the dataframe')
