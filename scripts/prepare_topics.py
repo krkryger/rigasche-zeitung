@@ -145,17 +145,14 @@ def create_topic_data_for_reduction(reduction, previous_reduction):
         
     with open(directory+'\\reduction_hierarchy.json', 'w', encoding='utf8') as f:
         hierarchy = t2v.get_topic_hierarchy()
-        json.dump(hierarchy, f)       
+        json.dump(hierarchy, f)
 
     with open(directory+'\\sizes.json', 'w', encoding='utf8') as f:
-        #sizes = [int(i) for i in list(t2v.get_topic_sizes(reduced=True)[0])]
-        sizes = {top+previous_reduction: int(size) for top, size
-                    in enumerate(list(t2v.get_topic_sizes(reduced=True)[0][:reduction]))}
+        sizes = [int(i) for i in t2v.get_topic_sizes(reduced=True)[0]]
         json.dump(sizes, f)
 
     with open(directory+'\\default_labels.json', 'w', encoding='utf8') as f:
-        labels = {top+previous_reduction: '-'.join(top_words[:3]) for top, top_words
-                    in enumerate(list(t2v.get_topics(reduced=True)[0][:reduction]))}
+        labels = ['-'.join(top_words[:5]) for top_words in t2v.get_topics(reduced=True)[0]]
         json.dump(labels, f)
         
     print('Finished')
@@ -231,8 +228,14 @@ if __name__ == '__main__':
     t2v = Top2Vec.load(model_path)
     print(f'{t2v.get_num_topics()} original topics')
 
-    for r, previous_r in zip(reductions, [0]+reductions):
+    previous_r = 0
+    for r in reductions:
         create_topic_data_for_reduction(r, previous_reduction=previous_r)
+        previous_r += r
+
+
+    #for r, previous_r in zip(reductions, [0]+reductions):
+    #    create_topic_data_for_reduction(r, previous_reduction=previous_r)
 
     print(f'Creating organized topic hierarchy')
     sizes = get_sizes(reductions)
