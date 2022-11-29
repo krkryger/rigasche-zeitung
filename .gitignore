@@ -1,6 +1,7 @@
 data/raw
 data/models
 data/spans_tokenized.json
+data/topics
 
 notebooks/.ipynb_checkpoints
 notebooks/scrap.ipynb
