@@ -288,9 +288,9 @@ df['origin_date'] = pd.to_datetime(df.origin_date)
 
 df['delta'] = (df['doc_date'] - df['origin_date']).dt.days
 
-# drop entries with origin date that is negative or more than 1 year
-print(f'Dropping {len(df) - len(df.loc[(df.delta > 0) & (df.delta < 350)])} entries with invalid (x < 0 | x > 350) time differences')
-df = df.loc[(df.delta > 0) & (df.delta < 350)]
+# drop entries with origin date that is negative or more than 100 days
+print(f'Dropping {len(df) - len(df.loc[(df.delta > 0) & (df.delta < 101)])} entries with invalid (x < 0 | x > 100) time differences')
+df = df.loc[(df.delta > 0) & (df.delta < 101)]
 print('Reindexing')
 df['new_index'] = range(len(df))
 df.set_index('new_index', drop=True, inplace=True)
